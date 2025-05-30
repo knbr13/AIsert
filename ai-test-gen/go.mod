@@ -1,4 +1,4 @@
-module github.com/knbr13/ait
+module github.com/knbr13/aitesten
 
 go 1.24
 

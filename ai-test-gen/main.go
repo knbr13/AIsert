@@ -1,6 +1,6 @@
 package main
 
-import "github.com/knbr13/ait/cmd"
+import "github.com/knbr13/aitestgen/cmd"
 
 func main() {
 	cmd.Execute()

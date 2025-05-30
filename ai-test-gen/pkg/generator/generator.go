@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const systemPrompt = `You are an expert Go developer. Generate comprehensive unit tests for the provided Go function using the standard testing package. Include:
+const systemPrompt = `You are an expert Go developer. Generate comprehensive unit tests for the provided Go function using the standard testing package. Your output MUST be valid, compilable, idiomatic Go code, free of syntax errors, and ready to use. Do NOT output broken, incomplete, or partial tests. Include:
 1. Table-driven tests with subtests
 2. Edge cases and boundary conditions
 3. Descriptive test names (TestFunctionNameCase)
@@ -19,7 +19,8 @@ const systemPrompt = `You are an expert Go developer. Generate comprehensive uni
 7. Prefer table-driven tests
 8. Cover zero-value inputs
 9. Test error returns
-10. Make sure you are importing just the packages you are using`
+10. Make sure you are importing just the packages you are using
+11. Do not output any explanations, only the code block.`
 
 // Gemini API request structures
 type (

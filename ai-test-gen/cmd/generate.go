@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/spf13/cobra"
 
@@ -84,35 +85,34 @@ var generateCmd = &cobra.Command{
 				fmt.Println("No Go files found in folder.")
 				os.Exit(1)
 			}
-			errors := make(map[string]error)
+			var wg sync.WaitGroup
+			wg.Add(len(files))
 			for _, file := range files {
-				content, err := os.ReadFile(file)
-				if err != nil {
-					errors[file] = fmt.Errorf("read error: %w", err)
-					continue
-				}
-				tests, err := generator.GenerateUnitTests(string(content), openaiAPIKey)
-				if err != nil {
-					errors[file] = fmt.Errorf("generation error: %w", err)
-					continue
-				}
-				outFile := strings.TrimSuffix(file, ".go") + "_test.go"
-				if err := os.WriteFile(outFile, []byte(tests), 0644); err != nil {
-					errors[file] = fmt.Errorf("write error: %w", err)
-					continue
-				}
-				if err := formatter.RunGoImports(outFile); err != nil {
-					errors[file] = fmt.Errorf("goimports error: %w", err)
-					continue
-				}
-				fmt.Printf("Tests generated: %s\n", outFile)
+				go func(file string) {
+					defer wg.Done()
+					content, err := os.ReadFile(file)
+					if err != nil {
+						fmt.Fprintf(os.Stderr, "read error: %v\n", err)
+						return
+					}
+					tests, err := generator.GenerateUnitTests(string(content), openaiAPIKey)
+					if err != nil {
+						fmt.Fprintf(os.Stderr, "generation error: %v\n", err)
+						return
+					}
+					outFile := strings.TrimSuffix(file, ".go") + "_test.go"
+					if err := os.WriteFile(outFile, []byte(tests), 0644); err != nil {
+						fmt.Fprintf(os.Stderr, "write error: %v\n", err)
+						return
+					}
+					if err := formatter.RunGoImports(outFile); err != nil {
+						fmt.Fprintf(os.Stderr, "goimports error: %v\n", err)
+						return
+					}
+					fmt.Printf("tests generated for file: %s\n", outFile)
+				}(file)
 			}
-			if len(errors) > 0 {
-				fmt.Println("Some files had errors:")
-				for f, e := range errors {
-					fmt.Printf("%s: %v\n", f, e)
-				}
-			}
+			wg.Wait()
 			return
 		}
 

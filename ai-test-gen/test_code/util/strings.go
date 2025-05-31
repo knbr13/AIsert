@@ -2,7 +2,6 @@ package utils
 
 import (
 	"strings"
-	"unicode"
 )
 
 func ConcatStrings(strs ...string) string {
@@ -35,22 +34,6 @@ func ReverseString(s string) string {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
 	return string(runes)
-}
-
-// IsPalindrome checks whether a given string is a palindrome (case-insensitive, ignoring spaces and punctuation).
-func IsPalindrome(s string) bool {
-	var cleaned []rune
-	for _, r := range s {
-		if unicode.IsLetter(r) || unicode.IsNumber(r) {
-			cleaned = append(cleaned, unicode.ToLower(r))
-		}
-	}
-	for i, j := 0, len(cleaned)-1; i < j; i, j = i+1, j-1 {
-		if cleaned[i] != cleaned[j] {
-			return false
-		}
-	}
-	return true
 }
 
 func CountVowels(s string) int {

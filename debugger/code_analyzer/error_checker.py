@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 import google.generativeai as genai
 from rich.console import Console
@@ -10,10 +10,7 @@ from rich.syntax import Syntax
 console = Console()
 
 class GeminiCodeChecker:
-    """Uses Google Gemini AI to analyze Python code for bugs, errors, and improvements."""
-
     def __init__(self):
-        """Initialize Gemini model with API key from .env."""
         load_dotenv()
         api_key = os.getenv("GEMINI_API_KEY")
 
@@ -32,16 +29,15 @@ class GeminiCodeChecker:
     def _display_missing_key(self):
         console.print("[bold red]❌ Missing API Key![/bold red]")
         console.print("[bold yellow]🔧 Please add this to your .env file: GEMINI_API_KEY=your_key_here[/bold yellow]")
-
-    def analyze_code(self, code: str) -> List[Dict[str, Any]]:
-        """Send Python code to Gemini AI and get analysis results."""
+    
+    def analyze_code(self, code: str, language: Optional[str] = "python") -> List[Dict[str, Any]]:
         if not self.model:
             console.print("[red]❌ Gemini model is not initialized.[/red]")
             return []
 
         prompt = f"""
-You are a professional Python code reviewer.
-Analyze the following code and return all issues in this strict format:
+You are a professional code reviewer specialized in {language} programming language.
+Analyze the following {language} code and return all issues in this strict format:
 
 - Type: [Syntax Error, Runtime Error, Logical Error, Performance Issue]
 - Line: [line number or 'Multiple']
@@ -52,16 +48,17 @@ Analyze the following code and return all issues in this strict format:
 
 Respond in plain text with the exact format for each issue. No markdown or extra text.
 
-Here is the Python code:
-\"\"\"python
+Here is the {language} code:
+\"\"\"
 {code}
 \"\"\"
 """
+
         try:
             response = self.model.generate_content(prompt)
             raw_output = response.text.strip()
-            console.print(Panel.fit(Syntax(code, "python", theme="monokai", line_numbers=True), title="Analyzed Code"))
-
+            # Use dynamic syntax highlighting based on language parameter
+            console.print(Panel.fit(Syntax(code, language, theme="monokai", line_numbers=True), title=f"Analyzed {language.capitalize()} Code"))
             issues = self._parse_ai_output(raw_output)
 
             if not issues:
@@ -83,7 +80,6 @@ Here is the Python code:
             return []
 
     def _parse_ai_output(self, output: str) -> List[Dict[str, Any]]:
-        """Parse Gemini AI's output into structured issue dictionaries."""
         issues = []
         current = {}
 
@@ -91,6 +87,7 @@ Here is the Python code:
             line = line.strip()
             if not line:
                 continue
+
             if line.startswith("- Type:"):
                 if current:
                     issues.append(current)
@@ -120,13 +117,11 @@ Here is the Python code:
 
 
 def print_analysis(issues: List[Dict[str, Any]]) -> None:
-    """Print analysis results in a rich, formatted table."""
     if not issues:
         console.print("[bold green]✅ No issues found! Your code looks good![/bold green]")
         return
 
     table = Table(title="Gemini Code Review Results", header_style="bold magenta")
-
     table.add_column("Type", style="red", no_wrap=True)
     table.add_column("Line", style="cyan")
     table.add_column("Description", style="yellow")

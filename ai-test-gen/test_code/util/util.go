@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"strconv"
 )
 
 func GetEnv(name, fallback string) string {
@@ -21,4 +22,16 @@ func Range(start, end int) []int {
 		result[i] = start + i
 	}
 	return result
+}
+
+func GetEnvBool(name string, fallback bool) bool {
+	val := os.Getenv(name)
+	if val == "" {
+		return fallback
+	}
+	b, err := strconv.ParseBool(val)
+	if err != nil {
+		return fallback
+	}
+	return b
 }

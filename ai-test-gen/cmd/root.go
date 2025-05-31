@@ -8,7 +8,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "testgen",
+	Use:   "aigen",
 	Short: "AI-powered Go unit test generator",
 }
 
